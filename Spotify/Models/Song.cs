@@ -13,7 +13,7 @@ namespace Spotify
         public string Songname {  get; set; }
         public string Artistname { get; set; }
         public string Genre { get; set; }
-        public Song(string name, string artist, string genre)
+        public Song(string artist, string name, string genre)
         {
             Id = id ++;
             Songname = name;

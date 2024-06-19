@@ -11,5 +11,6 @@ namespace Spotify
         public static string FormatError = "Enter correct symbol";
         public static string PlaylistNotFound = "You don't have this playlist";
         public static string SongNotFound = "Song not found";
+        public static string PasswordError = "Enter correct password";
     }
 }

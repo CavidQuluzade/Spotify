@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spotify;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,11 @@ namespace Spotify
     {
         public List<Song> Songs { get; set; }
         public List<Artist> Artists { get; set; }
-        public List<Playlist> Playlists { get; set; }
+ 
         public List<Genre> Genres { get; set; }
+
+        public Accounts CurrentUser { get; set; }
+        public List<Accounts> Account { get; set; }
         public Spotify()
         {
             Songs = new List<Song>
@@ -618,7 +622,7 @@ namespace Spotify
                 new Artist("Miles Davis"),
                 new Artist("Antonio Vivaldi")
             };
-            Playlists = new List<Playlist>();
+            Account = new List<Accounts>();
             Genres = new List<Genre>
             {
                 new Genre("Jazz"),
@@ -631,13 +635,13 @@ namespace Spotify
                 new Genre("Electronic")
             };
         }
-        public void AddPlaylist(Playlist playlist)
+        public Accounts SignIn(string email, string password)
         {
-            Playlists.Add(playlist);
+            return Account.FirstOrDefault(account => account.Email == email && account.Password == password);
         }
-        public void RemovePlaylist(Playlist playlist) 
+        public void SignOut()
         {
-            Playlists.Remove(playlist); 
+            CurrentUser = null;
         }
     }
 }
