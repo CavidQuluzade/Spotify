@@ -10,6 +10,9 @@ namespace Spotify
         static void Main(string[] args)
         {
             Spotify spotify = new Spotify();
+            string input = null;
+            int id = 0;
+            int result = 0;
             bool exit = false;
             var isSucceed = true;
         Intialize1:
@@ -26,40 +29,48 @@ namespace Spotify
                     case ConsoleKey.U:
                     RepeatSurname: Console.WriteLine("Enter your surname");
                         string surname = Console.ReadLine();
-                        if (!string.IsNullOrWhiteSpace(surname))
+                        if (!string.IsNullOrWhiteSpace(surname) && !surname.Contains(" "))
                         {
                         RepeatName: Console.WriteLine("Enter your name");
                             string name = Console.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(name))
+                            if (!string.IsNullOrWhiteSpace(name) && !name.Contains(" "))
                             {
                             RepeatEmail: Console.WriteLine("Enter email");
                                 string email = Console.ReadLine();
-                                if (!string.IsNullOrWhiteSpace(email) && email.Contains("@"))
+                                if (!string.IsNullOrWhiteSpace(email) && email.Contains("@") && !email.Contains(" "))
                                 {
-                                RepeatPassword: Console.WriteLine("Enter password");
-                                    string password = Console.ReadLine();
-                                    if (string.IsNullOrWhiteSpace(password) && password.Contains(" "))
+                                    if (spotify.Account.FirstOrDefault(x => x.Email == email) == null)
                                     {
-                                        Console.WriteLine(ErrorMessages.FormatError);
-                                        goto RepeatPassword;
-                                    }
-                                    else
-                                    {
-                                    RepeatRepeatPassword: Console.WriteLine("Repeat password");
-                                        string repeatedpassword = Console.ReadLine();
-                                        if (repeatedpassword == password)
+                                    RepeatPassword: Console.WriteLine("Enter password");
+                                        string password = Console.ReadLine();
+                                        if (!string.IsNullOrWhiteSpace(password) && !password.Contains(" "))
                                         {
-                                            Accounts account = new Accounts(name, surname, email, password);
-                                            spotify.Account.Add(account);
+                                        RepeatRepeatPassword: Console.WriteLine("Repeat password");
+                                            string repeatedpassword = Console.ReadLine();
+                                            if (repeatedpassword == password)
+                                            {
+                                                Accounts account = new Accounts(name, surname, email, password);
+                                                spotify.Account.Add(account);
 
-                                            Console.WriteLine("your account created");
-                                            goto Intialize1;
+                                                Console.WriteLine("your account created");
+                                                goto Intialize1;
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine(ErrorMessages.PasswordError);
+                                                goto RepeatRepeatPassword;
+                                            }   
                                         }
                                         else
                                         {
-                                            Console.WriteLine(ErrorMessages.PasswordError);
-                                            goto RepeatRepeatPassword;
+                                            Console.WriteLine(ErrorMessages.FormatError);
+                                            goto RepeatPassword;
                                         }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("This email is used");
+                                        goto RepeatEmail;
                                     }
                                 }
                                 else
@@ -92,11 +103,7 @@ namespace Spotify
                         goto Intialize1;
 
                 }
-
-
-
             Initialize2:
-
                 if (spotify.CurrentUser is not null)
                 {
 
@@ -115,156 +122,182 @@ namespace Spotify
                     switch (Key)
                     {
                         case ConsoleKey.A:
-                            Console.WriteLine("Enter playlist name");
-                        RepeatPlaylistname: string playlistname = Console.ReadLine();
-                            if (string.IsNullOrWhiteSpace(playlistname))
+                            RepeatPlaylistname: Console.WriteLine("Enter playlist name");
+                            string playlistname = Console.ReadLine();
+                            if (string.IsNullOrWhiteSpace(playlistname) && playlistname.Contains(" "))
                             {
                                 Console.WriteLine("!Enter name!");
                                 goto RepeatPlaylistname;
                             }
                             else
                             {
-
-                                spotify.CurrentUser.AddPlaylist(new Playlist(playlistname));
-                                Console.WriteLine($"{playlistname} created");
-                                goto Initialize2;
+                                if(spotify.CurrentUser.Playlists.FirstOrDefault(x=>x.Playlistname == playlistname) is null)
+                                {
+                                    spotify.CurrentUser.AddPlaylist(new Playlist(playlistname));
+                                    Console.WriteLine($"{playlistname} created");
+                                    goto Initialize2;
+                                }
+                                else
+                                {
+                                    Console.WriteLine(ErrorMessages.ExistPlaylist);
+                                    goto RepeatPlaylistname;
+                                }
                             }
 
                         case ConsoleKey.S:
-                            foreach (var playlist in spotify.CurrentUser.Playlists)
+                            if (spotify.CurrentUser.Playlists.Count != 0)
                             {
-                                playlist.GetPlaylistDetails();
-                            }
-                        RepeatPlaylistId: Console.WriteLine("Enter id of playlist");
-                            string input = Console.ReadLine();
-                            isSucceed = int.TryParse(input, out int result);
-                            if (isSucceed)
-                            {
-                                var Exist = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == result);
-                                if (Exist != null)
+                                foreach (var playlist in spotify.CurrentUser.Playlists)
                                 {
-                                RepeatSongName1: Console.WriteLine("Enter something to add song to your playlist");
-                                    string Query = Console.ReadLine().Trim().ToLower();
-                                    if (!string.IsNullOrWhiteSpace(Query))
+                                    playlist.GetPlaylistDetails();
+                                }
+                                RepeatPlaylistId: Console.WriteLine("Enter id of playlist");
+                                input = Console.ReadLine();
+                                isSucceed = int.TryParse(input, out result);
+                                if (isSucceed)
+                                {
+                                    var Exist = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == result);
+                                    if (Exist != null)
                                     {
-                                        List<Song> foundSongs = spotify.Songs.Where(song => song.Artistname.ToLower().Contains(Query) || song.Songname.ToLower().Contains(Query) || song.Genre.ToLower().Contains(Query)).ToList();
-
-                                        if (foundSongs.Any())
+                                    RepeatSongName1: Console.WriteLine("Enter something to add song to your playlist");
+                                        string Query = Console.ReadLine().Trim().ToLower();
+                                        if (!string.IsNullOrWhiteSpace(Query))
                                         {
-                                            Console.WriteLine("Found songs:");
-                                            for (int i = 0; i < foundSongs.Count; i++)
-                                            {
-                                                Console.WriteLine(foundSongs[i].GetSongDetails());
-                                            }
+                                            List<Song> foundSongs = spotify.Songs.Where(song => song.Artistname.ToLower().Contains(Query) || song.Songname.ToLower().Contains(Query) || song.Genre.ToLower().Contains(Query)).ToList();
 
-                                        RepeatNumber: Console.WriteLine("Enter the number of the song you want to pick (or type 'exit' to quit):");
-                                            input = Console.ReadLine();
-
-                                            if (input.ToLower() == "exit")
+                                            if (foundSongs.Any())
                                             {
-                                                goto Initialize2;
-                                            }
-                                            else if (int.TryParse(input, out int selectedIndex))
-                                            {
-
-                                                var existsong = foundSongs.FirstOrDefault(foundSongs => foundSongs.Id == selectedIndex);
-                                                if (existsong is not null)
+                                                Console.WriteLine("Found songs:");
+                                                for (int i = 0; i < foundSongs.Count; i++)
                                                 {
-                                                    Exist.Songs.Add(existsong);
-                                                    Console.WriteLine($"You picked: {existsong.GetSongDetails()}");
+                                                    Console.WriteLine(foundSongs[i].GetSongDetails());
+                                                }
+
+                                            RepeatNumber: Console.WriteLine("Enter the number of the song you want to pick (or type 'exit' to quit):");
+                                                input = Console.ReadLine();
+
+                                                if (input.ToLower() == "exit")
+                                                {
                                                     goto Initialize2;
+                                                }
+                                                else if (int.TryParse(input, out int selectedIndex))
+                                                {
+
+                                                    var existsong = foundSongs.FirstOrDefault(foundSongs => foundSongs.Id == selectedIndex);
+                                                    if (existsong is not null)
+                                                    {
+                                                        Exist.Songs.Add(existsong);
+                                                        Console.WriteLine($"You picked: {existsong.GetSongDetails()}");
+                                                        goto Initialize2;
+                                                    }
+                                                    else
+                                                    {
+                                                        Console.WriteLine(ErrorMessages.SongNotFound);
+                                                        goto RepeatNumber;
+                                                    }
+
                                                 }
                                                 else
                                                 {
-                                                    Console.WriteLine(ErrorMessages.SongNotFound);
+                                                    Console.WriteLine(ErrorMessages.FormatError);
                                                     goto RepeatNumber;
                                                 }
-
                                             }
                                             else
                                             {
-                                                Console.WriteLine(ErrorMessages.FormatError);
-                                                goto RepeatNumber;
+                                                Console.WriteLine(ErrorMessages.SongNotFound);
+                                                goto RepeatSongName1;
                                             }
                                         }
                                         else
                                         {
-                                            Console.WriteLine(ErrorMessages.SongNotFound);
+                                            Console.WriteLine(ErrorMessages.FormatError);
                                             goto RepeatSongName1;
                                         }
                                     }
                                     else
                                     {
-                                        Console.WriteLine(ErrorMessages.FormatError);
-                                        goto RepeatSongName1;
+                                        Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                        goto RepeatPlaylistId;
                                     }
                                 }
                                 else
                                 {
-                                    Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                    Console.WriteLine(ErrorMessages.FormatError);
                                     goto RepeatPlaylistId;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine(ErrorMessages.FormatError);
-                                goto RepeatPlaylistId;
+                                Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                
                             }
+                            goto Initialize2;
 
                         case ConsoleKey.V:
-                            foreach (var playlist in spotify.CurrentUser.Playlists)
+                            RepeatPLaylistId:
+                            if (spotify.CurrentUser.Playlists.Count != 0)
                             {
-                                playlist.GetPlaylistDetails();
-                            }
-                            Console.WriteLine("Enter id of playlist");
-                        RepeatPLaylistId: input = Console.ReadLine();
-                            isSucceed = int.TryParse(input, out result);
-                            if (isSucceed)
-                            {
-                                var Exist = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == result);
-                                if (Exist != null)
+                                
+                                foreach (var playlist in spotify.CurrentUser.Playlists)
                                 {
-                                    Exist.GetSongsinPlaylist();
-                                RepeatSongId: Console.WriteLine("Select id to listen");
-                                    input = Console.ReadLine();
-                                    isSucceed = int.TryParse(input, out result);
-                                    if (isSucceed)
+                                    playlist.GetPlaylistDetails();
+                                }
+                                     Console.WriteLine("Enter id of playlist");
+                                     input = Console.ReadLine();
+                                     isSucceed = int.TryParse(input, out result);
+                                if (isSucceed)
+                                {
+                                    var Exist = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == result);
+                                    if (Exist != null)
                                     {
-                                        var Existsong = Exist.Songs.FirstOrDefault(x => x.Id == result);
-                                        if (Existsong != null)
+                                        Exist.GetSongsinPlaylist();
+                                    RepeatSongId: Console.WriteLine("Select id to listen");
+                                        input = Console.ReadLine();
+                                        isSucceed = int.TryParse(input, out result);
+                                        if (isSucceed)
                                         {
-                                            Console.WriteLine("You are listening...");
-                                            Console.WriteLine(Existsong.Artistname);
-                                            Console.WriteLine(Existsong.Songname);
-                                            Console.WriteLine(Existsong.Genre);
-                                            Console.WriteLine("Listened");
-                                            goto Initialize2;
+                                            var Existsong = Exist.Songs.FirstOrDefault(x => x.Id == result);
+                                            if (Existsong != null)
+                                            {
+                                                Console.WriteLine("You are listening...");
+                                                Console.WriteLine(Existsong.Artistname);
+                                                Console.WriteLine(Existsong.Songname);
+                                                Console.WriteLine(Existsong.Genre);
+                                                Console.WriteLine("Listened");
+                                                goto Initialize2;
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine(ErrorMessages.SongNotFound);
+                                                goto RepeatSongId;
+                                            }
                                         }
                                         else
                                         {
-                                            Console.WriteLine(ErrorMessages.SongNotFound);
+                                            Console.WriteLine(ErrorMessages.FormatError);
                                             goto RepeatSongId;
                                         }
+
                                     }
                                     else
                                     {
-                                        Console.WriteLine(ErrorMessages.FormatError);
-                                        goto RepeatSongId;
+                                        Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                        goto RepeatPLaylistId;
                                     }
-
                                 }
                                 else
                                 {
-                                    Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                    Console.WriteLine(ErrorMessages.FormatError);
                                     goto RepeatPLaylistId;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine(ErrorMessages.FormatError);
-                                goto RepeatPlaylistId;
+                                Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                goto Initialize2;
                             }
-
+                            break;
                         case ConsoleKey.L:
                         RepeatSongName:
                             Console.WriteLine("Enter something to listen song");
@@ -311,7 +344,7 @@ namespace Spotify
                                                     {
                                                         Console.WriteLine("Enter playlist name");
                                                     RepeatPlaylistname2: playlistname = Console.ReadLine();
-                                                        if (string.IsNullOrWhiteSpace(playlistname))
+                                                        if (string.IsNullOrWhiteSpace(playlistname) && playlistname.Contains(" "))
                                                         {
                                                             Console.WriteLine("!Enter name!");
                                                             goto RepeatPlaylistname2;
@@ -386,122 +419,149 @@ namespace Spotify
                             }
 
                         case ConsoleKey.R:
-                        RepeatPlaylistId1: foreach (var pleylist in spotify.CurrentUser.Playlists)
+                        RepeatPlaylistId1:
+                            if (spotify.CurrentUser.Playlists.Count != 0)
                             {
-                                pleylist.GetPlaylistDetails();
-                            }
-                            Console.WriteLine("enter id of playlist to rename");
-                            input = Console.ReadLine();
-                            isSucceed = int.TryParse(input, out int id);
-                            if (isSucceed)
-                            {
-                                var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
-                                if (exist1 != null)
+                                foreach (var pleylist in spotify.CurrentUser.Playlists)
                                 {
-                                RepeatNewName: Console.WriteLine("Enter new name");
-                                    playlistname = Console.ReadLine();
-                                    if (!string.IsNullOrWhiteSpace(playlistname))
+                                    pleylist.GetPlaylistDetails();
+                                }
+                                Console.WriteLine("enter id of playlist to rename");
+                                input = Console.ReadLine();
+                                isSucceed = int.TryParse(input, out id);
+                                if (isSucceed)
+                                {
+                                    var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
+                                    if (exist1 != null)
                                     {
-                                        exist1.Playlistname = playlistname;
-                                        goto Initialize2;
+                                    RepeatNewName: Console.WriteLine("Enter new name");
+                                        playlistname = Console.ReadLine();
+                                        if (!string.IsNullOrWhiteSpace(playlistname) && !playlistname.Contains(" "))
+                                        {
+                                            exist1.Playlistname = playlistname;
+                                            goto Initialize2;
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine(ErrorMessages.FormatError);
+                                            goto RepeatNewName;
+                                        }
                                     }
                                     else
                                     {
-                                        Console.WriteLine(ErrorMessages.FormatError);
-                                        goto RepeatNewName;
+                                        Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                        goto RepeatPlaylistId1;
                                     }
                                 }
                                 else
                                 {
-                                    Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                    Console.WriteLine(ErrorMessages.FormatError);
                                     goto RepeatPlaylistId1;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine(ErrorMessages.FormatError);
-                                goto RepeatPlaylistId1;
+                                Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                goto Initialize2;
                             }
 
                         case ConsoleKey.Delete:
-                        RepeatPlaylistId2: foreach (var pleylist in spotify.CurrentUser.Playlists)
+                        RepeatPlaylistId2:
+                            if (spotify.CurrentUser.Playlists.Count != 0)
                             {
-                                pleylist.GetPlaylistDetails();
-                            }
-                            Console.WriteLine("enter id of playlist to delete");
-                            input = Console.ReadLine();
-                            isSucceed = int.TryParse(input, out id);
-                            if (isSucceed)
-                            {
-                                var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
-                                if (exist1 != null)
+                                foreach (var pleylist in spotify.CurrentUser.Playlists)
                                 {
-                                    spotify.CurrentUser.Playlists.Remove(exist1);
-                                    goto Initialize2;
+                                    pleylist.GetPlaylistDetails();
+                                }
+                                Console.WriteLine("enter id of playlist to delete");
+                                input = Console.ReadLine();
+                                isSucceed = int.TryParse(input, out id);
+                                if (isSucceed)
+                                {
+                                    var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
+                                    if (exist1 != null)
+                                    {
+                                        spotify.CurrentUser.Playlists.Remove(exist1);
+                                        goto Initialize2;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                        goto RepeatPlaylistId2;
+                                    }
                                 }
                                 else
                                 {
-                                    Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                    Console.WriteLine(ErrorMessages.FormatError);
                                     goto RepeatPlaylistId2;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine(ErrorMessages.FormatError);
-                                goto RepeatPlaylistId2;
+                                Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                goto Initialize2;
                             }
 
                         case ConsoleKey.Backspace:
-                        RepeatPlaylistId3: foreach (var pleylist in spotify.CurrentUser.Playlists)
+                        RepeatPlaylistId3:
+                            if (spotify.CurrentUser.Playlists.Count != 0)
                             {
-                                pleylist.GetPlaylistDetails();
-                            }
-                            Console.WriteLine("enter id of playlist to delete");
-                            input = Console.ReadLine();
-                            isSucceed = int.TryParse(input, out id);
-                            if (isSucceed)
-                            {
-                                var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
-                                if (exist1 != null)
+                                foreach (var pleylist in spotify.CurrentUser.Playlists)
                                 {
-                                RepeatSongId: foreach (var song in exist1.Songs)
+                                    pleylist.GetPlaylistDetails();
+                                }
+                                Console.WriteLine("enter id of playlist to delete");
+                                input = Console.ReadLine();
+                                isSucceed = int.TryParse(input, out id);
+                                if (isSucceed)
+                                {
+                                    var exist1 = spotify.CurrentUser.Playlists.FirstOrDefault(x => x.Id == id);
+                                    if (exist1 != null)
                                     {
-                                        song.GetSongDetails();
-                                    }
-                                    Console.WriteLine("Enter song id to delete");
-                                    input = Console.ReadLine();
-                                    isSucceed = int.TryParse(input, out id);
-                                    if (isSucceed)
-                                    {
-                                        var existsong = exist1.Songs.FirstOrDefault(x => x.Id == id);
-                                        if (existsong != null)
+                                    RepeatSongId: foreach (var song in exist1.Songs)
                                         {
-                                            exist1.Songs.Remove(existsong);
-                                            goto Initialize2;
+                                            song.GetSongDetails();
+                                        }
+                                        Console.WriteLine("Enter song id to delete");
+                                        input = Console.ReadLine();
+                                        isSucceed = int.TryParse(input, out id);
+                                        if (isSucceed)
+                                        {
+                                            var existsong = exist1.Songs.FirstOrDefault(x => x.Id == id);
+                                            if (existsong != null)
+                                            {
+                                                exist1.Songs.Remove(existsong);
+                                                goto Initialize2;
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine(ErrorMessages.SongNotFound);
+                                                goto RepeatSongId;
+                                            }
                                         }
                                         else
                                         {
-                                            Console.WriteLine(ErrorMessages.SongNotFound);
+                                            Console.WriteLine(ErrorMessages.FormatError);
                                             goto RepeatSongId;
                                         }
+
                                     }
                                     else
                                     {
-                                        Console.WriteLine(ErrorMessages.FormatError);
-                                        goto RepeatSongId;
+                                        Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                        goto RepeatPlaylistId3;
                                     }
-
                                 }
                                 else
                                 {
-                                    Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                    Console.WriteLine(ErrorMessages.FormatError);
                                     goto RepeatPlaylistId3;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine(ErrorMessages.FormatError);
-                                goto RepeatPlaylistId3;
+                                Console.WriteLine(ErrorMessages.PlaylistNotFound);
+                                goto Initialize2;
                             }
                         case ConsoleKey.Escape:
                             goto Intialize1;
@@ -512,6 +572,10 @@ namespace Spotify
                             Console.WriteLine(ErrorMessages.FormatError);
                             break;
                     }
+                }
+                else
+                {
+                    Console.WriteLine("Error");
                 }
             } while (!exit);
         exit: Console.WriteLine("exited");

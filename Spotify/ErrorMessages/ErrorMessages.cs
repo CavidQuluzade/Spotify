@@ -12,5 +12,6 @@ namespace Spotify
         public static string PlaylistNotFound = "You don't have this playlist";
         public static string SongNotFound = "Song not found";
         public static string PasswordError = "Enter correct password";
+        public static string ExistPlaylist = "This playlist exists. Use another name";
     }
 }
